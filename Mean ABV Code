@@ -1,0 +1,10 @@
+recipes %>%
+group_by(Style) %>%
+summarise(
+    mean_abv = mean(ABV, na.rm = TRUE)
+) %>%
+top_n(n = 50) %>%
+ggplot(aes(reorder(Style, mean_abv), mean_abv))+
+geom_bar(stat = "identity", fill = "lightgreen", color = "black")+
+labs(x = "Beer Styles", y = "Mean Alcohol by Volume")+
+coord_flip()
