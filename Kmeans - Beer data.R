@@ -28,56 +28,70 @@ df1 <- data.frame(beerdata)
 #Convert blanks to NA
 df1[df1==""] <- NA
 
-#Select only the columns that we will use for our model
+#Select only the columns that we will use for our clustering model
 
-mybeer <- df1[, c('Style','OG', 'FG', 'ABV', 'IBU', 'Color', 'BoilTime' )]
+mybeer <- df1[, c('Style','OG', 'FG', 'ABV', 'IBU', 'Color', 'BrewMethod')]
 
 #Check visualisations to see any obvious clusters
 
+pairs.default(mybeer) # NB This is slow to generate, due to the volume of data
 
-barplot(mybeer$Style)
+plot(mybeer$Style, mybeer$Color) #Too many data points, we will use the means of the variables instead
 
-scale(mybeer, center = TRUE, scale = TRUE)
+#First we will view plots and look for outliers:
+plot(mybeer$ABV) # We will remove outliers above 20% ABV, these are unusual, may be data input errors
+plot(mybeer$IBU) # We will remove ouliers above 1000, measure of specific chemical created by hop content
+plot(mybeer$Color) # We will remove outliers above 50, probably data input errors
 
-#Compare Alcohol content and color
-mybeer3 <- df1[, c('ABV', 'Color' )]
+mybeerclean <- subset(mybeer, ABV <=20 & IBU <= 1000 & mybeer$Color <= 75)
+str(mybeerclean)
 
-ggpairs(mybeer3)
+#Means of ABV, IBU and Color, plotted against Style:
 
-#Remove outliers with alcohol content above 20% and colour above 50
-#mybeer4 <- subset(mybeer3, ABV <= 20 & Color <= 50)
+mean(mybeerclean$ABV)
+avgABV <- aggregate(data=mybeerclean, mybeerclean$ABV ~ mybeerclean$Style, mean, na.rm = TRUE)
+avgABV
+plot(avgABV)
 
-ggpairs(mybeer5)
-ggpairs(mybeer6)
+mean(mybeerclean$IBU)
+avgIBU <- aggregate(data=mybeerclean, mybeerclean$IBU ~ mybeerclean$Style, mean, na.rm = TRUE)
+avgIBU
+plot(avgIBU)
+barplot(mybeerclean$IBU)
 
-ggpairs(mybeer3)
 
-#mybeer5 <- df1[, c('ABV', 'BoilTime')]
+mean(mybeerclean$Color)
+avgColor <- aggregate(data=mybeerclean, mybeerclean$Color ~ mybeerclean$Style, mean, na.rm = TRUE)
+avgColor
+plot(avgColor)
 
-#pairs(head(mybeer, n = 250))
 
-mybeer6 <- df1[, c('ABV', 'IBU' )]
 
-mybeer7 <- df1[, c('ABV', 'IBU', 'Style')]
+#Means of ABV, IBU and Color plotted against BrewMethod
+mean(mybeerclean$ABV)
+avgABVbrew <- aggregate(data=mybeerclean, mybeerclean$ABV ~ mybeerclean$BrewMethod, mean, na.rm = TRUE)
+avgABVbrew
 
-nrow(mybeer7)
+boxplot(mybeerclean$ABV ~ mybeerclean$BrewMethod, col = rainbow(4))
+
+mean(mybeerclean$IBU)
+avgIBUbrew <- aggregate(data=mybeerclean, mybeerclean$IBU ~ mybeerclean$BrewMethod, mean, na.rm = TRUE)
+avgIBUbrew
+plot(avgIBUbrew)
+
+boxplot(mybeerclean$IBU ~ mybeerclean$BrewMethod)
+
+mean(mybeerclean$Color)
+avgColorbrew <- aggregate(data=mybeerclean, mybeerclean$Color ~ mybeerclean$BrewMethod, mean, na.rm = TRUE)
+avgColorbrew
+plot(avgColorbrew)
+
+boxplot(mybeerclean$Color ~ mybeerclean$BrewMethod)
+
+summary(mybeerclean)
 
 #Summary to check what the 6 most common styles of beer are:
 
-summary(mybeer7)
-
-nrow(mybeer7)
-
-plot(mybeer7$Style)
-
-
-mybeerstyle2 <- subset(mybeer7, mybeer7$Style == 'American IPA', 
-                                mybeer7$Style == 'American Pale Ale',
-                                mybeer7$Style == 'Saison',
-                                mybeer7$Style == 'American Light Lager', 
-                                mybeer7$Style == 'American Amber Ale',
-                                mybeer7$Style == 'Blonde Ale', select = ABV:Style)
-                       
 mybeerstyle2
 nrow(mybeerstyle2)
 
@@ -86,23 +100,12 @@ mybeerstyle2
 #QUESTION
 #Focus on bitterness and alcohol level, can we predict what style the beer is?
 
-pairs(mybeer6)
 
-summary(mybeer6)
-
-nrow(mybeer6) #73861
-
-#Remove outlier beers with alcohol level above 20% and bitterness above 1000
-
-mybeersfinal <- subset(mybeer6, ABV <= 20, IBU <= 1000)
-
-pairs(mybeersfinal)
-
-#Kmeans 
+#Kmeans test
 
 set.seed(12)
 
-beer.km <- kmeans(mybeersfinal, centers = 3, n = 20)
+beer.km <- kmeans(avgIBU, centers = 6, n = 20)
 
 #View results
 beer.km
@@ -110,11 +113,12 @@ beer.km
 #View Centers
 beer.km$centers
 
-pairs(beer.km$cluster)
 
 #Plot clusters in colour
-plot(mybeer7,col=beer.km$cluster)
+plot(mybeerclean$Style,col=beer.km$cluster)
 
+
+sns$age <- ifelse(sns$age >= 13 & sns$age < 20, sns$age, NA)
 
 
 
